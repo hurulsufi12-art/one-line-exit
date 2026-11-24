@@ -40,6 +40,19 @@ def validate_text(text: str) -> None:
         raise ValueError("TEXT must not contain control characters")
 
 
+def _write_entry() -> None:
+    """Write TEXT verbatim to $OUTPUT_DIR/entry.txt (no trailing newline).
+
+    Separated from main() so the validate-then-write order is explicit:
+    main() validates first, and only a valid TEXT ever reaches this
+    writer.
+    """
+    # Empty OUTPUT_DIR counts as unset (PLAN contract): fall back to /output.
+    output_dir = Path(os.environ.get("OUTPUT_DIR") or "/output")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "entry.txt").write_bytes(TEXT.encode("utf-8"))
+
+
 def main() -> None:
     """Validate TEXT, then write it verbatim to $OUTPUT_DIR/entry.txt.
 
@@ -47,10 +60,7 @@ def main() -> None:
     ValueError and writes no file. No trailing newline is added.
     """
     validate_text(TEXT)  # read the global live, at call time (tests patch it)
-    # Empty OUTPUT_DIR counts as unset (PLAN contract): fall back to /output.
-    output_dir = Path(os.environ.get("OUTPUT_DIR") or "/output")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "entry.txt").write_bytes(TEXT.encode("utf-8"))
+    _write_entry()
 
 
 if __name__ == "__main__":
